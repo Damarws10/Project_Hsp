@@ -1,0 +1,32 @@
+-Dashboard :
+	-card:kendaraan tersedia
+	-card:kendaraan service
+	-card:kendaraan rusak
+	-card:user Pemakai kendaraan
+	-grafik : chart-grafik, pemakaian selama setahun.
+	-grafik : chart-donut,kendaraan:
+				-Tersedia
+				-service
+				-rusak
+				-Dipakai
+-History:
+	-superadmin:tabel informasi semua user pemakai.
+	-admin:tambah + tabel informasi semua user pemakai kendaraan.
+	-user:tambah + tabel informasi pemakaian user.
+	-Tanggal masuk, approve, keluar, approve keluar.
+	-Tambah Navbar Histori kendaraan
+
+-Data User:
+	-superadmin:-Form user untuk meregis user.
+		    -Informasi all user dan status.
+	-admin:-Informasi all user.
+-Data Kendaraan:
+	-superadmin:-Form kendaraan untuk meregis kendaraan.
+		    -Informasi all kendaraan.
+	-admin: -Informasi all kendaraan.
+
+		- Tambahan:
+		kolum,status:perpanjang dll, display bulan.
+		-navbar kendaraan : Kendaraan operasional kantor, Kendaraan operasional pribadi
+
+		-
