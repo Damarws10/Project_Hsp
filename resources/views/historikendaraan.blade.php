@@ -1,12 +1,11 @@
 @extends('layouts.master')
 
 @section('content')
-
 <section class="content-header">
     <div class="container-fluid">
       <div class="row mb-2">
         <div class="col-sm-6">
-          <h1>Transaksi Kendaraan</h1>
+          <h1>Informasi</h1>
         </div>
         <div class="col-sm-6">
           <ol class="breadcrumb float-sm-right">
@@ -16,278 +15,254 @@
       </div>
     </div><!-- /.container-fluid -->
 </section>
-
 <div class="notify"></div>
 
-<div class="card">
-    <div class="card-header">
+<div class="card mx-auto col-11">
+    <div class="card-header" style="background-color: transparent;">
         <!-- Button trigger modal -->
-        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#create-modal">
-          Tambah Data
-        </button>
+        <h2 style="text-align: center;">Histori Kendaraan</h2>
     </div>
         <div class="card-body">
             <div class="table-responsive">    
-                <table class="table table-bordered data-table">
+                <table id="example1" class="table table-bordered table-striped">
                     <thead>
                         <tr>
                             <th>No</th>
-                            <th>Nama</th>
-                            <th>No Plat</th>
-                            <th>Foto</th>
-                            <th>Tanggal Peminjaman</th>
-                            <th>Keterangan</th>
-                            <th>action</th>
+                            <?php
+                              if(!(Auth::user()->role == "superuser" || Auth::user()->role == "admin")){
+                              echo "<th>Nama Peminjam</th>";
+                              echo "<th>No Plat</th>";
+                              echo "<th>Tanggal Request</th>";
+                              echo "<th>Tanggal Approve Request</th>";
+                              echo "<th>Tanggal Pengembalian</th>";
+                              echo "<th>Tanggal Approve Pengembalian</th>";
+                              }else{
+                                echo "<th>No Plat</th>
+                                      <th>Nama Kendaraan</th>
+                                      <th>Merek Kendaraan</th>";
+                              }
+                            ?>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
                       <?php $no=1; ?>
-                      @foreach($histori as $p)
-                      <tr>
-                        <td>{{ $no++ }}</td>
-                        <td>{{ $p->name }}</td>
-                        <td>{{ $p->no_plat }}</td>
+                      @foreach($histori as $histori)
+                      <td>{{ $no++ }}</td>
+                      <?php print(!(Auth::user()->role == "superuser" || Auth::user()->role == "admin") ? "<td> $histori->name </td>" : "")?>
+                      <td>{{ $histori->no_plat }}</td>
+                      <?php
+
+                      if(Auth::user()->role == "superuser" || Auth::user()->role == "admin"){
+                          echo "<td>$histori->nama_kendaraan</td>
+                                <td>$histori->mrk_kendaraan</td>";
+                        }else{
+                          echo "";
+                        }
+                      ?>
+
+                      <?php
+
+                      if(!(Auth::user()->role == "superuser" || Auth::user()->role == "admin")){
+                        $tanggal = date('l,d M Y', strtotime($histori->tanggal_request));
+                        
+                          echo "<td> $tanggal </td>";
+
+                        }else{
+                          echo "";
+                        }
+                      ?>
+                      <?php
+                      if(!(Auth::user()->role == "superuser" || Auth::user()->role == "admin")){
+                      $time = ($histori->approve_request);
+                      $tanggal = date('l,d M Y', strtotime($histori->approve_request));
+                         if(empty($time) && empty($histori->keterangan)){
+                          echo "<td>Menunggu</td>";
+                         }else if($histori->keterangan == 10){
+                          echo "<td>DiTolak</td>";
+                         }else{
+                          echo "<td>$tanggal</td>";
+                         } 
+                      }else{
+                        echo "";
+                      }
+                       ?>
+
+                      <?php
+
+                      if(!(Auth::user()->role == "superuser" || Auth::user()->role == "admin")){
+                        $tanggal = date('l,d M Y', strtotime($histori->tanggal_pengembalian));
+                        
+                          echo "<td> $tanggal </td>";
+
+                        }else{
+                          echo "";
+                        }
+                      ?>
+
+                      <?php
+
+                      if(!(Auth::user()->role == "superuser" || Auth::user()->role == "admin")){
+                      $time = ($histori->approve_pengembalian);
+                      $tanggal = date('l,d M Y', strtotime($histori->approve_pengembalian));
+                         if(empty($time) && empty($histori->keterangan)){
+                          echo "<td>Menunggu</td>";
+                         }else if(empty($time) && $histori->keterangan == 9){
+                          echo "<td>Menunggu</td>";
+                         }else if($histori->keterangan == 10){
+                          echo "<td>DiTolak</td>";
+                         }else{
+                          echo "<td>$tanggal</td>";
+                         }
+                      }else{
+                        echo "";
+                      }
+                       ?>
                         <td>
-                         <!--  <button type="button"
-                                class="btn btn-primary"
-                                data-toggle="modal"
-                                data-target="#exampleModal{{ $p->id_transaksi }}">
-                                Show
-                          </button> -->
-                          <img src="{{ Storage::url('public/').$p->foto }}" class="rounded" style="width: 150px">
+                          <?php
+                          if(!(Auth::user()->role == "superuser" || Auth::user()->role == "admin")){
+                          echo"<button type='button' class='btn btn-primary' data-bs-toggle='modal' data-bs-target='#detail-modal$histori->id'>
+                              Detail 
+                            </button>";
+                          }else{
+                            echo "<a href='detailkendaraan/$histori->no_plat' class='btn btn-primary' style='margin-right:10px;'>
+                              Pemakaian 
+                            </a>";
+
+                            // echo"<button type='button' class='btn btn-warning' data-bs-toggle='modal' data-bs-target='#staticBackdrop$histori->plat_id'>
+                            //   Detail 
+                            // </button>";
+                          }
+                          ?>
                         </td>
-                        <td>{{ date('l,d M Y', strtotime($p->tgl_peminjaman)) }}</td>
-                        <td>{{ $p->status }}</td>
-                        <td>
-                            <button type="button" style="margin-bottom: 10px; width: 100%" class="btn btn-warning edit" data-toggle="modal" data-target="#edit-modal{{ $p->id_transaksi }}">
-                                Edit </button>
-                            <br>
-                            <button type="button" style="width: 100%" class="btn btn-danger delete" data-toggle="modal" data-target="#destroy-modal{{ $p->id_transaksi }}">
-                                Delete </button>
-                          </td>
-                        </tr>
+                      </tr>
                       @endforeach
                     </tbody>
                 </table>
             </div>
         </div>
 </div>
-
-@foreach($histori as $p)
-<div class="modal fade"
-        id="exampleModal{{ $p->id_transaksi }}"
-        tabindex="-1"
-        role="dialog"
-        aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
-         
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-             
-                <!-- Add image inside the body of modal -->
-                <div class="modal-body">
-                    <img id="image" src="{{ Storage::url('public/').$p->foto }}" class="rounded" style="width: 100%"
-                        alt="Click on button" />
-                </div>
- 
-                <div class="modal-footer">
-                    <button type="button"
-                        class="btn btn-secondary"
-                        data-dismiss="modal">
-                        Close
-                </button>
-                </div>
-            </div>
-        </div>
-    </div>
-@endforeach
-
-<!-- Modal Create -->
-<div class="modal fade" id="create-modal" tabindex="-1" role="dialog" aria-labelledby="create-modalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="create-modalLabel">Create Data</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <form method="post" action="{{ route('store_transaksi') }}">
-          {{ csrf_field() }}
-
-          <div class="form-group">
-              <input type="hidden" value="{{Auth::user()->id}}" id="n" name="id" class="form-control" required>
-              <label for="n">Name</label>
-              <input type="text" value="{{Auth::user()->name}}" id="n" name="name" class="form-control" disabled>
-          </div>
-          <div class="form-group">
-              <label for="e">No Plat</label>
-                  <select name="no_plat" id="r" class="form-select" required>
-                  @foreach($kendaraan as $r)
-                      <option value="{{ $r->no_plat }}">{{ $r->no_plat }}</option>
-                  @endforeach
-                  </select>
-                  @if($errors->has('no_plat'))
-                    <div class="text-danger">
-                      {{ $errors->first('no_plat')}}
-                    </div>
-                  @endif
-          </div>
-          <div class="form-group">
-              <label for="birthdaytime">Tanggal Pinjam :</label>
-              <input type="datetime-local" id="tgl_pinjam" name="tgl_pinjam" class="form-control">
-              @if($errors->has('tgl_pinjam'))
-                    <div class="text-danger">
-                      {{ $errors->first('tgl_pinjam')}}
-                    </div>
-              @endif
-          </div>
-          <div class="form-group">
-              <label for="p">Keterangan</label>
-              <input type="text" value="Pengajuan" name="keter"  id="p" class="form-control" disabled>
-              <input type="hidden" value="8" name="keter"  id="p" class="form-control">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-primary btn-store">Simpan</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-<!-- Modal Create -->
-
-<!-- Modal Edit -->
-@foreach($histori as $p)
-<div class="modal fade" id="edit-modal{{ $p->id_transaksi }}" tabindex="-1" role="dialog" aria-labelledby="create-modalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="create-modalLabel">Create Data</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <form method="post" action="{{ route('update_transaksiKendaraan') }}">
-          {{ csrf_field() }}
-
-          <input type="hidden" id="n" name="id_gue" class="form-control" value="{{ $p->id_transaksi }}">
-
-          <div class="form-group">
-              <input type="hidden" value="{{Auth::user()->id}}" id="n" name="id" class="form-control" required>
-              <label for="n">Name</label>
-              <input type="text" value="{{Auth::user()->name}}" id="n" name="name" class="form-control" disabled>
-          </div>
-          <div class="form-group">
-              <label for="e">No Plat</label>
-                  <select name="no_plat" id="r" class="form-select" required>
-                  @foreach($kendaraan as $r)
-                      <option 
-                      <?php 
-                        $plat = ($p->no_plat);
-                        if($plat == ($r->no_plat)){
-                          echo "selected='selected'";
-                        }
-                       ?> value="{{ $r->no_plat }}">{{ $r->no_plat }}</option>
-                  @endforeach
-                  </select>
-                  @if($errors->has('no_plat'))
-                    <div class="text-danger">
-                      {{ $errors->first('no_plat')}}
-                    </div>
-                  @endif
-          </div>
-          <div class="form-group">
-              <label for="birthdaytime">Tanggal Pinjam :</label>
-              <input type="datetime-local" value="{{ $p->tgl_peminjaman }}" id="tgl_pinjam" name="tgl_pinjam" class="form-control">
-              @if($errors->has('tgl_pinjam'))
-                    <div class="text-danger">
-                      {{ $errors->first('tgl_pinjam')}}
-                    </div>
-              @endif
-          </div>
-
-          <div class="form-group">
-              <label for="e">Keterangan</label>
-                  <select name=keter id="r" class="form-select" required>
-                    <option 
-                      <?php 
-                        $keter = "Dipakai";
-                        echo "value='5'";
-                        if($keter == ($p->status)){
-                          echo "selected='selected'";
-                        }
-                       ?>>Dipakai
-                    </option>
-                    <option 
-                      <?php 
-                        $keter = "Tidak Dipakai";
-                        echo "value='6'";
-                        if($keter == ($p->status)){
-                          echo "selected='selected'";
-                        }
-                       ?>>Tidak Dipakai
-                    </option>
-                    <option 
-                      <?php 
-                        $keter = "Diservice";
-                        echo "value='7'";
-                        if($keter == ($p->status)){
-                          echo "selected='selected'";
-                        }
-                       ?>>Diservice
-                    </option>
-                    <option 
-                      <?php 
-                        $keter = "Pengajuan";
-                        echo "value='8'";
-                        if($keter == ($p->status)){
-                          echo "selected='selected'";
-                        }
-                       ?>>Pengajuan
-                    </option>
-                  </select>
-                  @if($errors->has('no_plat'))
-                    <div class="text-danger">
-                      {{ $errors->first('no_plat')}}
-                    </div>
-                  @endif
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-primary btn-store">Simpan</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-@endforeach
-
+  
 <!-- Destroy Modal -->
-@foreach($histori as $p)
-<div class="modal fade" id="destroy-modal{{ $p->id_transaksi }}" tabindex="-1" role="dialog" aria-labelledby="destroy-modalLabel" aria-hidden="true">
+@foreach($user_histori as $histori)
+<div class="modal fade" data-bs-backdrop="static" id="detail-modal{{ $histori->id }}" tabindex="-1" role="dialog" aria-labelledby="destroy-modalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="destroy-modalLabel">Yakin Hapus ?</h5>
-        <form method="post" action="{{ route('deleteTransaksi') }}">
-          {{ csrf_field() }}
-          <input type="hidden" id="n" name="id_gue" class="form-control" value="{{ $p->id_transaksi }}" required>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+      <div class="container my-5 pr-5">
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
+        <div class="row">
+          <div class="col-md-12 md-1">
+            <h4 style="margin-left: 1.2rem;">Latest News</h4>
+            <ul class="timeline-3">
+              <li>
+                <a href="#!">Pengajuan Request</a>
+                <!-- diambil dari tabel transaksi -->
+                <a href="#!" class="float-end">{{ date('l,d M Y', strtotime($histori->tanggal_request)) }}</a>
+                <p class="mt-2"><?php
+                  // diambil dari tabel tanggal yg nilainya tidak empty
+                  $nilai=($histori->approve_request);
+                  if(empty($nilai)){
+                    echo "Mohon Tunggu Sedang Di request ke admin";
+                  }else{
+                    echo "Sudah diproses";
+                  }
+                ?></p>
+              </li>
+              <li>
+                <a href="#!">Pengajuan Approved</a>
+                <a href="#!" class="float-end">
+                  <?php
+                    $waktu_utama = ($histori->approve_request); 
+                    $waktu = date('l,d M Y', strtotime($histori->approve_request));
+                    if(!empty($waktu_utama)){
+                      echo "$waktu";
+                    }else{
+                      echo "Menunggu";
+                    }
+
+                  ?>
+                </a>
+                <p class="mt-2">
+                  <?php
+                  // diambil dari tabel tanggal yg nilainya tidak empty
+                  $nilai=($histori->approve_request);
+                  $waktu = date('H : i', strtotime($nilai));
+
+                  if(empty($nilai)){
+                    echo "Not approved";
+                  }else{
+                    echo "Approved";
+                    echo "<ul>
+                            <li>Nama Aprroved   : $histori->name </li>
+                            <li>Waktu Approved  : $waktu </li>
+                          </ul>";
+                    echo "Terimakasih Sudah Menunggu dan Melakukan Transaksi :)";
+                  }
+                ?>
+                </p>
+              </li>
+              <li>
+                <a href="#!">Approved Pengembalian</a>
+                <a href="#!" class="float-end">
+                  <?php
+                    $waktu_utama = ($histori->approve_pengembalian); 
+                    $waktu = date('l,d M Y', strtotime($waktu_utama));
+                    if(!empty($waktu_utama)){
+                      echo "$waktu";
+                    }else{
+                      echo "Belum Dikembalikan";
+                    }
+
+                  ?>
+                </a>
+                <p class="mt-2">
+                  <?php
+                    // diambil dari tabel tanggal yg nilainya tidak empty
+                    $nilai=($histori->approve_pengembalian);
+                    $waktu = date('H : i', strtotime($nilai));
+                    if(empty($nilai)){
+                      echo "Not approved";
+                    }else{
+                      echo "Approved";
+                      echo "<ul>
+                              <li>Nama Penerima   : $histori->name</li>
+                              <li>Waktu Diterima  : $waktu</li>
+                            </ul>";
+                     echo "Terimakasih Sudah Meminjam dan Melakukan Pengembalian :)";
+                    }
+                  ?>
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>  
+    </div>
+  </div>
+</div>
+@endforeach
+
+@foreach($detail_histori as $histori)
+<div class="modal fade" id="staticBackdrop{{ $histori->id_plat }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="staticBackdropLabel">Detail</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>No Plat : {{$histori->no_plat}}</p>
+        <p>Nama Kendaraan : {{}}</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-        <button type="submit" class="btn btn-danger btn-destroy">Hapus</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Understood</button>
       </div>
-    </form>
     </div>
   </div>
 </div>
 @endforeach
+
 @endsection 

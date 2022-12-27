@@ -6,7 +6,7 @@
   <div class="card card-outline card-primary">
     <div class="card-header text-center">
       <img style="margin: 0 auto; width: 10em; box-sizing:border-box;" src="../../img/hsp.png" alt="error">
-      <a href="#" class="h1"><b>Pinjam</b>Vechile</a>
+      <a href="#" class="h1"><b>Pinjam</b>Kendaraan</a>
     </div>
     <div class="card-body">
       <p class="login-box-msg">Sign in to start your session</p>
@@ -22,7 +22,7 @@
           </div>
                     @error('email')
                       <span class="invalid-feedback" role="alert">
-                        <strong>Cie salah!</strong>
+                        <strong>Email salah!</strong>
                       </span>
                     @enderror
         </div>

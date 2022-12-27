@@ -1,0 +1,25 @@
+Kerangka Acuan Kerja :
+aplikasi e-commerce HSP
+
+-Latar Belakang HSP. -rehan
+-Tujuan aplikasi.	-rehan
+-Sasaran perangkat lunak yang dikembangkan: E-commerce -rehan
+-Ruang Lingkup program
+	-Tahapan Pelaksanaan:
+		+ perencanaan : Mendefinisikan secara rinci untuk perancangan aplikasi. -rehan
+		+ Perancangan - rehan
+		+ pelaksanaan pekerjaan - fahmi
+		+ uji coba operasional -fahmi
+		+ Implementasi sistem - fahmi
+		+ Pelatihan bagi calon pengguna -risma
+		+ Maintenance -bareng bareng
+
+-spesifikasi teknis
+	a. database -risma
+	b. sistem -damar
+	c. jaringan -damar
+	d. keamanan 
+		- auth user -damar
+		- privileged user -damar
+		- Backup/restore -fahmi
+		- User log -risma

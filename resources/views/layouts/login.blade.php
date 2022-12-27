@@ -15,12 +15,16 @@
   <link rel="stylesheet" href="../plugins/icheck-bootstrap/icheck-bootstrap.min.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="css/adminlte.min.css">
-<title>@yield('judul')</title>
-</head>
-<body class="hold-transition login-page">
-  @yield('content')
-<!-- partial:index.partial.html -->
-<!-- partial -->
+
+  <link rel="icon" href="{{ asset('img/favicon.png') }}?v={{ date('YmdHis') }}">
+
+  <title>@yield('judul')</title>
+  </head>
+
+  <body class="hold-transition login-page">
+    @yield('content')
+  <!-- partial:index.partial.html -->
+  <!-- partial -->
 
   <!-- jQuery -->
 <script src="../plugins/jquery/jquery.min.js"></script>

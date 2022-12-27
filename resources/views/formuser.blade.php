@@ -29,7 +29,7 @@
     <div class="row">
       <div class="form-group col-md-6 email">
         <label for="inputEmail4">Email</label>
-        <input type="email" class="form-control" name="email" id="email" placeholder="Email">
+        <input type="email" class="form-control" name="email" id="email" placeholder="Email" required>
          @if($errors->has('email'))
             <div class="text-danger">
               {{ $errors->first('email')}}
@@ -40,7 +40,7 @@
   
       <div class="form-group col-md-6">
         <label for="inputPassword4">Password</label>
-        <input type="password" class="form-control" name="inputPassword" id="inputPassword" placeholder="Password">
+        <input type="password" class="form-control" name="inputPassword" id="inputPassword" placeholder="Password" required>
          @if($errors->has('inputPassword'))
               <div class="text-danger">
                   {{ $errors->first('inputPassword')}}
@@ -56,7 +56,7 @@
   
       <div class="form-group">
           <label for="inputAddress">Nama</label>
-          <input type="text" class="form-control" name="nama" id="nama" placeholder="risxxx xxx">
+          <input type="text" class="form-control" name="nama" id="nama" placeholder="risxxx xxx" required>
            @if($errors->has('nama'))
               <div class="text-danger">
                   {{ $errors->first('nama')}}
@@ -67,7 +67,7 @@
 
       <div class="form-group">
           <label for="inputAddress">No Telfon</label>
-          <input type="text" class="form-control" name="no_tlpn" id="no_tlpn" placeholder="08 xxx">
+          <input type="text" class="form-control" name="no_tlpn" id="no_tlpn" placeholder="08 xxx" required>
            @if($errors->has('no_tlpn'))
                 <div class="text-danger">
                     {{ $errors->first('no_tlpn')}}
@@ -78,7 +78,7 @@
   
       <div class="form-group">
           <label for="inputAddress">Alamat</label>
-          <input type="text" class="form-control" name="alamat" id="alamat" placeholder="1234 Main St">
+          <input type="text" class="form-control" name="alamat" id="alamat" placeholder="1234 Main St" required>
            @if($errors->has('alamat'))
                 <div class="text-danger">
                     {{ $errors->first('alamat')}}

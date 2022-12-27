@@ -67,7 +67,7 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-6 mb-2">
+                <div class="col-md-4 mb-3">
                   <label for="validationCustom03">Tahun Pembuatan</label>
                   <input type="text" class="form-control" name="thn_pembuatan" id="validationCustom03" placeholder="year">
                   @if($errors->has('thn_pembuatan'))
@@ -79,7 +79,8 @@
                     Please provide a valid number.
                   </div>
                 </div>
-                <div class="col-md-6 mb-2">
+
+                <div class="col-md-4 mb-3">
                   <label for="validationCustom04">Warna Kendaraan</label>
                   <input type="text" class="form-control" name="warna" id="validationCustom04" placeholder="color">
                   @if($errors->has('warna'))
@@ -91,10 +92,28 @@
                     Please provide a valid Color.
                   </div>
                 </div>
-              </div>
-              <div class="row">
+
                 <div class="col-md-4 mb-3">
                   <label for="validationCustom05">Tipe Kendaraan</label>
+                    <select name="tipe_kendaraan" id="r" class="form-select" required=>
+                      <option disabled="">- Tipe -</option>
+                      <option value="1">Mobil</option>
+                      <option value="2">Motor</option>
+                    </select>
+                </div>
+                  @if($errors->has('tipe_kendaraan'))
+                    <div class="text-danger">
+                      {{ $errors->first('tipe_kendaraan')}}
+                    </div>
+                  @endif
+                  <div class="invalid-feedback">
+                    Please provide a valid Tipe.
+                  </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <label for="validationCustom05">Kendaraan</label>
                   <select name="tipe" id="r" class="form-select" required>
                       <option disabled="">- Tipe -</option>
                     @foreach($tipe as $p)
@@ -123,6 +142,17 @@
                       <option value="4">Perpanjang STNK & Ganti Plat</option>
                     </select>
                 </div>
+              </div>
+              <div class="row">
+                <div class="form-group col-md-12">
+                  <label for="birthdaytime">Tanggal Perpanjang STNK :</label>
+                  <input type="datetime-local" id="tgl_stnk" name="tgl_stnk" class="form-control">
+                  @if($errors->has('tgl_stnk'))
+                        <div class="text-danger">
+                          {{ $errors->first('tgl_stnk')}}
+                        </div>
+                  @endif
+                </div>                
               </div>
               <button type="submit" class="btn btn-primary">Create</button>
           </form>

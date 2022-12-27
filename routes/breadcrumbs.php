@@ -18,9 +18,14 @@ Breadcrumbs::for('profile', function(BreadcrumbTrail $trail) {
 	$trail->push('Profile', route('profile'));
 });
 
-Breadcrumbs::for('historikendaraan', function(BreadcrumbTrail $trail) {
+Breadcrumbs::for('transaksikendaraan', function(BreadcrumbTrail $trail) {
 	$trail->parent('home');
-	$trail->push('History Kendaraan', route('historikendaraan'));
+	$trail->push('Transaksi Kendaraan', route('transaksikendaraan'));
+});
+
+Breadcrumbs::for('historikendaraan', function(BreadcrumbTrail $trail) {
+	$trail->parent('transaksikendaraan');
+	$trail->push('Histori Kendaraan', route('historikendaraan'));
 });
 
 

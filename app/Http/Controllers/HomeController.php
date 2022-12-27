@@ -6,8 +6,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 
+use Auth;
 use Carbon\Carbon;
+use Redirect,Response;
 
 Use App\Models\Post;
 Use App\Models\User;
@@ -35,45 +38,289 @@ class HomeController extends Controller
      */
     public function index()
     {
-        return view('home');
+
+        $data=[
+            'userJumlah' => $this->post->UserJumlah(),
+            'kendaraanJumlah' => $this->post->KendaraanJumlah(),
+            'kendaraanTerpakai' => $this->post->jumlahKendaraanTerpakai()
+        ];
+
+        $kendaraan = $this->post->kendaraan_infoPaginate();
+
+        // print_r($data);
+        return view('home', $data, compact('kendaraan'));
+    }
+
+    public function search_kendaraan(Request $request){
+        
+        $search = $request->input('search');
+
+        $data=[
+            'userJumlah' => $this->post->UserJumlah(),
+            'kendaraanJumlah' => $this->post->KendaraanJumlah(),
+            'kendaraanTerpakai' => $this->post->jumlahKendaraanTerpakai(),
+            'kendaraan' => $this->post->kendaraan_search($search)    
+        ];
+
+        // print_r($dataSearch);
+        return view('search', $data);
     }
 
     public function profile()
     {
-        return view('profile');
+        $id= Auth::user()->id;  
+        $user = $this->post->profil($id);
+
+        $user2 = DB::table('users')->where('id', $id)->get();
+
+        $foto_user  = $this->post->Fotouser($id);
+
+        return view('profile', compact('user', 'user2','foto_user'));
     }
 
-    public function historikendaraan(){
+    //Profile Update by User
+    public function profileUpdate(Request $request){
 
-        $histori = $this->post->transaksi_kendaraan();
+        $this->validate($request,[
+            'foto' => 'image|mimes:png,jpg,jpeg',
+            'nama' => 'required',
+            'email' => 'required|string|email|max:255',
+            'no_tlpn' => 'required',
+            'alamat'=> 'required', 
+        ]);
+
+        $email = Auth::user()->email;
+        $id = Auth::user()->id;
+        $foto = $request->file('foto');
+
+        if($email == $request->email && empty($foto)){
+            $data = ([
+                'name' => $request->nama,
+                'no_tlpn' => $request->no_tlpn,
+                'alamat' => $request->alamat,
+                'jns_klmn' => $request->jns_klmn
+            ]);
+        }else if($email != $request->email){
+
+            $getData = $this->post->getFotoUser($id);
+
+            foreach ($getData as $value) {
+                $get = $value;
+            }
+            
+            // Storage Delete
+            if(File::exists('uploads/user/'.$get)){
+                File::delete('uploads/user/'.$get);
+            }
+
+            // upload image
+
+            $nama_file = time()."_".$foto->getClientOriginalName();
+            $foto->move('uploads/user/', $nama_file);
+
+            $data = ([
+                'name' => $request->nama,
+                'email' => $request->email,
+                'foto_user' => $nama_file,
+                'no_tlpn' => $request->no_tlpn,
+                'alamat' => $request->alamat,
+                'jns_klmn' => $request->jns_klmn
+            ]);
+        }else{
+            $getData = $this->post->getFotoUser($id);
+
+            foreach ($getData as $value) {
+                $get = $value;
+            }
+            
+            // Storage Delete
+            if(File::exists('uploads/user/'.$get)){
+                File::delete('uploads/user/'.$get);
+            }
+            // upload image
+
+            $nama_file = time()."_".$foto->getClientOriginalName();
+            $foto->move('uploads/user/', $nama_file);
+
+            $data = ([
+                'name' => $request->nama,
+                'foto_user' => $nama_file,
+                'no_tlpn' => $request->no_tlpn,
+                'alamat' => $request->alamat,
+                'jns_klmn' => $request->jns_klmn
+            ]);
+        }
+
+        $this->post->profileUpdate($id, $data);
+
+        return redirect()->route('profile')->with(['success' => 'Data Berhasil DiUpdate!']);
+    }
+
+    //Update password user
+    public function changePassword(Request $request){
+
+        $request->validate([
+            'password' => ['required', 'string', 'min:8', 'confirmed']
+        ]);
+
+        $currentPasswordStatus = Hash::check($request->password, auth()->user()->password);
+
+        if(!$currentPasswordStatus){
+
+            // echo "berhasil";
+
+            User::findOrFail(Auth::user()->id)->update([
+                'password' => Hash::make($request->password),
+            ]);
+
+            return redirect()->back()->with('message','Password Updated Successfully');
+        }else{
+            // echo "Tidak berhasil";
+
+            return redirect()->back()->with('message','Masukkan Password Terbaru');
+        }
+    }
+
+    public function transaksikendaraan(){
+
+        $id = Auth::user()->id;
+
+        $kendaraan = $this->post->kendaraan_info();
+
+
+
+        if(Auth::user()->role == "superuser" || Auth::user()->role == "admin" ){
+            $histori = $this->post->transaksi_kendaraan_superuser();
+        }else{
+            $histori = $this->post->transaksi_kendaraan($id);
+        }
         $kendaraan = DB::table('kendaraan')->get();
-        return view('historikendaraan', compact('histori', 'kendaraan'));
+        return view('transaksikendaraan', compact('histori', 'kendaraan'));
+    }
+
+    public function approveKendaraan($id){
+
+        date_default_timezone_set('Asia/Jakarta');
+
+        $getTanggal = DB::table('transaksi_kendaraan')->select('tgl_peminjaman', 'no_plat')->where('id_transaksi', $id)->get();
+
+        $id_super = Auth::user()->id;
+
+        foreach ($getTanggal as $key) {
+            $tanggal = $key->tgl_peminjaman;
+            $no_plat = $key->no_plat;
+        }
+
+        $data=([
+            'status_approve' => 9
+        ]);
+
+        $statusTerpakai=([
+            'id_ketPinjam' => 5
+        ]);
+
+        $waktunow = Carbon::now()->format('Y-m-d H:i');
+        $datarequest=([
+            'approve_request' => $waktunow,
+            'updated_by'=> $id_super,
+            'keterangan' => 9
+        ]);
+
+        // print_r($data);
+        // print_r($statusTerpakai);
+
+        $this->post->approvePersetujuan($id,$data);
+        $this->post->updateApprove_kendaraan($no_plat, $statusTerpakai);
+        $this->post->updatehistorikendaraan($tanggal, $datarequest);
+
+
+        return redirect()->route('transaksikendaraan')->with(['success' => 'Data Berhasil Disimpan!']);
+    }
+
+    public function approveKendaraankembali($id){
+        
+        date_default_timezone_set('Asia/Jakarta');        
+
+        $getTanggal = DB::table('transaksi_kendaraan')->select('tgl_peminjaman', 'no_plat')->where('id_transaksi', $id)->get();
+
+        $id_super = Auth::user()->id;
+
+        foreach ($getTanggal as $key) {
+            $tanggal = $key->tgl_peminjaman;
+            $no_plat = $key->no_plat;
+        }
+
+        $data=([
+            'status_pengembalian' => 11
+        ]);
+
+         $statusTerpakai=([
+            'id_ketPinjam' => 6
+        ]);
+
+        $waktunow = Carbon::now()->format('Y-m-d H:i');
+        $datarequest=([
+            'approve_pengembalian' => $waktunow,
+            'updated_by'=> $id_super
+        ]);
+
+        // print_r($data);
+        $this->post->approvePersetujuan($id,$data);
+        //masuk ke database histori
+        $this->post->updatehistorikendaraan($tanggal, $datarequest);
+        //masuk ke database kendaraan kembali
+        $this->post->updateApprove_kendaraan($no_plat, $statusTerpakai);
+        //delete
+        $this->post->deleteAccess_transaksi($id);
+
+        return redirect()->route('transaksikendaraan')->with(['warning' => 'Mobil Telah dikembalikan data Dihapus!']);
     }
 
     public function store_transaksi(Request $request){
 
+        $no_plat = Request()->no_plat;
+
         $this->validate($request,[
             'no_plat' => 'required|unique:transaksi_kendaraan',
-            'tgl_pinjam' => 'required'
+            'tgl_pinjam' => 'required',
+            'tgl_pengembalian' => 'required'
         ]);
 
         $data=([
-            'id' => $request->id,
+            'id_user' => $request->id,
             'no_plat' => $request->no_plat,
             'tgl_peminjaman' => $request->tgl_pinjam,
+            'tgl_pengembalian' => $request->tgl_pengembalian,
             'keterangan' => $request->keter,
+            'created_by' => $request->id,
+        ]);
+
+        $statusTerpakai=([
+            'id_ketPinjam' => 11
+        ]);
+
+        $data2=([
+            'id_user' => $request->id,
+            'no_plat' => $request->no_plat,
+            'tanggal_request' => $request->tgl_pinjam,
+            'tanggal_pengembalian' => $request->tgl_pengembalian,
             'created_by' => $request->id
         ]);
 
 
         // print_r($data);
+        // print_r($data2);
 
-        $this->post->transaksi_kendaraan_create($data);                
+        $this->post->transaksi_kendaraan_create($data);
+        $this->post->storehistorikendaraan($data2);
 
-        if($data){
-            return redirect()->route('historikendaraan')->with(['success' => 'Data Berhasil Disimpan!']);
+        //update pada kendaraan
+         $this->post->updateApprove_kendaraan($no_plat, $statusTerpakai);             
+
+        if($data&&$data2){
+            return redirect()->route('home')->with(['success' => 'Data Berhasil Disimpan!']);
         }else{
-            return redirect()->route('historikendaraan')->with(['Danger' => 'Data Tidak Berhasil Disimpan!']);
+            return redirect()->route('home')->with(['Danger' => 'Data Tidak Berhasil Disimpan!']);
         }
     }
 
@@ -82,37 +329,188 @@ class HomeController extends Controller
     {
         //echo "test";
         date_default_timezone_set('Asia/Jakarta');
+        $id_super = Auth::user()->id;
 
         $id = Request()->id_gue;
+        $id_histori = Request()->tgl_pinjam;
+        $approve = Request()->approve_stats;
+        $no_plat = Request()->no_plat;
 
+        
         $data=([
-            'id' => $request->id,
+            'id_user' => $request->id,
             'no_plat' => $request->no_plat,
             'tgl_peminjaman' => $request->tgl_pinjam,
             'keterangan' => $request->keter,
-            'update_by' => $request->id,
+            'status_approve' => $request->approve_stats,
+            'status_pengembalian' => $request->approve_pengembalian,
+            'update_by' => $id_super,
             'updated_at' => Carbon::now()->format('Y-m-d H:i')
 
         ]);
-        // print_r($data);
-        // echo $id;
-  
-        $this->post->update_kendaraan($id, $data);
-     
-       if($data){
-        return redirect()->route('historikendaraan')->with(['info' => 'Data Berhasil diupdate!']);
+
+         $statusTerpakaiPengembalian=([
+                'id_ketPinjam' => 6
+            ]);
+
+
+        if($approve == 9){
+            $waktunow = Carbon::now()->format('Y-m-d H:i');
+            $data1=([
+                'id_user' => $request->id,
+                'no_plat' => $request->no_plat,
+                'approve_request' => $waktunow,
+                'updated_by'=> $id_super
+            ]);
+
+            $statusTerpakai=([
+                'id_ketPinjam' => 5
+            ]);
+
         }else{
-        return redirect()->route('historikendaraan')->with(['info' => 'Data Tidak Berhasil diupdate!']);
+            $waktunow = Carbon::now()->format('Y-m-d H:i');
+            $data1=([
+                'id_user' => $request->id,
+                'no_plat' => $request->no_plat,
+                'approve_pengembalian' => $waktunow,
+                'updated_by'=> $id_super
+            ]);
+
+            $statusTerpakai=([
+                'id_ketPinjam' => 6
+            ]);
+        }
+
+
+        // print_r($data);
+        // print_r($data1);
+
+        if($request->approve_stats == 9 && $request->approve_pengembalian == 11 ){
+        //update data waktu
+           $this->post->updatehistorikendaraan($id_histori, $data1);
+
+           $this->post->updateApprove_kendaraan($no_plat, $statusTerpakaiPengembalian);
+
+        //hapus setelah transaksi
+           $this->post->deleteAccess_transaksi($id);
+        }else if($request->approve_stats == 9){
+        //menyimpan data setelah update by superuser
+           $this->post->update_kendaraan($id, $data);
+
+           $this->post->updatehistorikendaraan($id_histori, $data1);
+
+        $this->post->updateApprove_kendaraan($no_plat, $statusTerpakai);
+
+        }else if($request->approve_pengembalian == 11){
+        //update data waktu
+           $this->post->updatehistorikendaraan($id_histori, $data1);
+        //update pada kendaraan
+         $this->post->updateApprove_kendaraan($no_plat, $statusTerpakai);
+        //hapus data setelah transaksi
+           $this->post->deleteAccess_transaksi($id);
+        }
+
+        if($data && $data1){
+            return redirect()->route('transaksikendaraan')->with(['info' => 'Data Berhasil diupdate!']);
+            }else{
+            return redirect()->route('transaksikendaraan')->with(['info' => 'Data Tidak Berhasil diupdate!']);
         }
     }
 
     public function deleteTransaksi(Request $request){
+
+
         $id = Request()->id_gue;
 
+        $getTanggal = DB::table('transaksi_kendaraan')->select('tgl_peminjaman', 'no_plat')->where('id_transaksi', $id)->get();
+
+        foreach ($getTanggal as $key) {
+            $tanggal = $key->tgl_peminjaman;            
+        }
+
+        $id_super = Auth::user()->id;
+
+        $datarequest=([
+            'updated_by'=> $id_super,
+            'keterangan' => 10
+        ]);
+
+
+        $no_plat = Request()->no_plat;
+        $statusTerpakai = ([
+            'id_ketPinjam' => 6
+        ]);
+
+        //masuk ke database histori
+        $this->post->updatehistorikendaraan($tanggal, $datarequest);
+        //masuk ke database kendaraan kembali
+        $this->post->updateApprove_kendaraan($no_plat, $statusTerpakai);
         // print($id);
         $this->post->deleteAccess_transaksi($id);
      
-        return redirect()->route('historikendaraan')->with(['delete' => 'Data Berhasil diHapus!']);
+        return redirect()->route('transaksikendaraan')->with(['delete' => 'Data Berhasil diHapus!']);
+    }
+
+    public function historikendaraan()
+    {
+        date_default_timezone_set('Asia/Jakarta');
+
+        $id = Auth::user()->id;
+        $user = Auth::user()->role;
+
+        $user_histori = DB::table('histori_kendaraan')
+                        ->leftJoin('users','users.id','=','histori_kendaraan.updated_by')
+                        ->select('histori_kendaraan.*','users.name')
+                        ->get();
+
+       $detail_histori = DB::table('histori_kendaraan')
+        ->join('kendaraan', 'histori_kendaraan.no_plat', '=', 'kendaraan.no_plat')
+        ->select('kendaraan.id_kendaraan as id_plat','histori_kendaraan.no_plat')->groupBy('no_plat','id_plat')->get();
+
+        
+
+        if($user == "superuser" || $user == "admin"){
+            $histori = $this->post->historikendaraan_superuser();
+        }else{
+            $histori = $this->post->historikendaraan($id);
+        }
+
+        // print_r($histori);
+
+        return view('historikendaraan', compact('histori','user_histori','detail_histori'));
+    }
+
+    //detail kendaraan
+
+    function detailkendaraan($no_plat){
+        
+        $itemtransaksi = $this->post->historikendaraanDetail($no_plat);
+        $tanggalpemakaian = $this->post->tanggalpemakaian($no_plat);
+        $userhistori = $this->post->userhistori($no_plat);
+        $CreatedByhistori = $this->post->CreatedByhistori($no_plat);
+        //$showGambarhistori = $this->post->showGambarhistori($no_plat);
+        $detailkend = $this->post->detailHistorikendaraan($no_plat);
+
+        if($itemtransaksi){
+
+            $data = [
+                     'NomerPlat' => $itemtransaksi->no_plat,
+                     'itemtransaksi' => $itemtransaksi->approve_pengembalian,
+                     'hitungpemakaian' => $this->post->hitungpemakaian($no_plat),
+                     'tanggalBaru' => $tanggalpemakaian->approve_pengembalian,
+                     'userhistori' => $userhistori->name,
+                     'CreatedByhistori' =>$CreatedByhistori->name,
+                     //'showGambarhistori' => $showGambarhistori->foto,
+                     'ShowDetailKendaraan' => $detailkend
+                    ];
+            // print_r($data);
+
+                    
+            return view('detailkendaraan',$data);
+        }else{
+            return abort('404');
+        }
+
     }
 
     public function formuser(){
@@ -202,27 +600,33 @@ class HomeController extends Controller
         $this->validate($request,[
             'no_plat' => 'required|unique:kendaraan',
             'nama_kendaraan' => 'required',
-            'foto' => 'required|image|mimes:png,jpg,jpeg',
+            'foto' => 'required|image|mimes:png,jpg,jpeg|max:1572',
             'thn_pembuatan' => 'required',
             'warna' => 'required',
+            'tipe_kendaraan' => 'required',
             'tipe' => 'required',
             'merek_kendaraan' => 'required',
-            'status' => 'required'
+            'status' => 'required',
+            'tgl_stnk' => 'required'
         ]);
 
         //upload image
         $foto = $request->file('foto');
-        $foto->storeAs('public', $foto->hashName());
+        $nama_file = time()."_".$foto->getClientOriginalName();
+        $foto->move('uploads/kendaraan/', $nama_file);
  
         $data=([
             'no_plat' => $request->no_plat,
             'nama_kendaraan' => $request->nama_kendaraan,
-            'foto' => $foto->hashName(),
+            'foto' => $nama_file,
             'thn_buat' => $request->thn_pembuatan,
             'warna' => $request->warna,
+            'tipe' => $request->tipe_kendaraan,
             'tp_kendaraan' => $request->tipe,
             'mrk_kendaraan' => $request->merek_kendaraan,
             'status' => $request->status,
+            'id_ketPinjam'=> 6,
+            'tgl_pajak' => $request->tgl_stnk,
             'created_by' => $request->id_user
         ]);
         
@@ -239,9 +643,14 @@ class HomeController extends Controller
 
     public function informasikendaraan() 
     {
+        date_default_timezone_set('Asia/Jakarta');
+        
         $kendaraan = $this->post->kendaraan_info();
         $model = DB::table('model_kendaraan')->get();
         $tipe = DB::table('jns_kendaraan')->get();
+
+        // dump($kendaraan);
+
         return view('informasikendaraan', compact('kendaraan', 'model', 'tipe'));
     }
 
@@ -264,9 +673,11 @@ class HomeController extends Controller
                 'nama_kendaraan' => $request->nama_kendaraan,
                 'thn_buat' => $request->thn_pembuatan,
                 'warna' => $request->warna,
+                'tipe' => $request->tipe_kendaraan,
                 'tp_kendaraan' => $request->tipe,
                 'mrk_kendaraan' => $request->merek_kendaraan,
                 'status' => $request->status,
+                'tgl_pajak' => $request->tgl_stnk,
                 'updated_at' => Carbon::now()->format('Y-m-d H:i'),
                 'updated_by' => $request->id_user
             ]);
@@ -281,24 +692,30 @@ class HomeController extends Controller
             Storage::delete('public/'.$get);
 
             // upload image
+
             $foto = $request->file('foto');
-            $foto->storeAs('public', $foto->hashName());            
+            $nama_file = time()."_".$foto->getClientOriginalName();
+            $foto->move('uploads/kendaraan/', $nama_file);         
 
             $data=([
                 'no_plat' => $request->no_plat,
                 'nama_kendaraan' => $request->nama_kendaraan,
-                'foto' => $foto->hashName(),
+                'foto' => $nama_file,
                 'thn_buat' => $request->thn_pembuatan,
                 'warna' => $request->warna,
+                'tipe' => $request->tipe_kendaraan,
                 'tp_kendaraan' => $request->tipe,
                 'mrk_kendaraan' => $request->merek_kendaraan,
                 'status' => $request->status,
+                'tgl_pajak' => $request->tgl_stnk,
                 'updated_at' => Carbon::now()->format('Y-m-d H:i'),
                 'updated_by' => $request->id_user
             ]);
         }
 
         // print_r($data);
+
+        // dump($request->all());
 
             $this->post->updateAccess_kendaraan($id, $data);
      

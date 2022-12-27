@@ -20,14 +20,14 @@
 
 <br>
 
-<div class="card mx-auto col-10">
+<div class="card mx-auto col-11">
     <div class="card-header" style="background-color: transparent;">
         <!-- Button trigger modal -->
-        <h2>Database</h2>
+      
     </div>
+    <div class="card">
         <div class="card-body">
-            <div class="table-responsive">    
-                <table class="table table-hover table-striped">
+                <table id="example1" class="table table-bordered table-striped">
                     <thead>
                         <tr>
                             <th>No</th>
@@ -35,7 +35,15 @@
                             <th>Email</th>
                             <th>Jabatan</th>
                             <th>Role</th>
-                            <th>Action</th>
+                            <?php
+
+                            if(Auth::user()->role == "admin" || Auth::user()->role == "user"){
+                              echo "";
+                            }else{
+                             echo "<th>Action</th>";
+                            }
+
+                            ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -47,37 +55,33 @@
                         <td>{{ $p->email }}</td>
                         <td>{{ $p->nama_jabatan }}</td>
                         <td>{{ $p->role }}</td>
-                        <td>
-                            <button <?php 
-                              $id_user = 1;
-                              if(($p->id) == $id_user){
-                                echo "disabled";
+                            <?php 
+                              $id_user = 6;
+                              if(($p->id) == $id_user || Auth::user()->role == "admin" ){
+                                echo "";
+                              }else{
+                                echo "<td> <button type='button' class='btn btn-warning edit' data-bs-toggle='modal' data-bs-target='#create-modal$p->id'>
+                                  Edit </button>";
+
+                                echo "<button type='button' class='btn btn-danger delete' data-toggle='modal' data-target='#destroy-modal$p->id'>
+                                  Delete </button> </td>";
                               }
-                            ?> type="button" class="btn btn-warning edit" data-toggle="modal" data-target="#create-modal{{ $p->id }}">
-                              Edit </button>
-                            <button <?php 
-                              $id_user = 1;
-                              if(($p->id) == $id_user){
-                                echo "disabled";
-                              }
-                            ?> type="button" class="btn btn-danger delete" data-toggle="modal" data-target="#destroy-modal{{ $p->id }}">
-                              Delete </button>
-                        </td>
+                            ?>
                       </tr>
                       @endforeach
                     </tbody>
-                </table>
-            </div>
+                </table>      
         </div>
+    </div>
 </div>
 @foreach($user as $p)
 <!-- Modal Create -->
-<div class="modal fade" id="create-modal{{ $p->id }}" tabindex="-1" role="dialog" aria-labelledby="create-modalLabel" aria-hidden="true">
+<div class="modal fade" data-bs-backdrop="static" id="create-modal{{ $p->id }}" tabindex="-1" role="dialog" aria-labelledby="create-modalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="create-modalLabel">Update Data</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -162,7 +166,7 @@
               </select>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             <button type="submit" class="btn btn-primary btn-store">Update</button>
           </div>
         </form>

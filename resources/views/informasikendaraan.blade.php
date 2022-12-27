@@ -22,48 +22,94 @@
         <!-- Button trigger modal -->
         <h2 style="text-align: center;">Database Kendaraan</h2>
     </div>
-        <div class="card-body">
-            <div class="table-responsive">    
-                <table class="table table-bordered data-table">
-                    <thead>
+        <div class="card">
+              <!-- /.card-header -->
+              <div class="card-body">
+                <table id="example1" class="table table-bordered table-striped">
+                  <thead>
                         <tr>
                             <th>No</th>
                             <th>No Plat</th>
                             <th>Nama Kendaraan</th>
                             <th>Merek Kendaraan</th>
                             <th>Foto</th>
-                            <th>Tahun Buat</th>
-                            <th>Warna</th>
                             <th>Tipe Kendaraan</th>
+                            <th>Pajak/Tahun</th>
                             <th>Status</th>
-                            <th>Action</th>
+                            <th>Keterangan Kendaraan</th>
+                            <?php  if(Auth::user()->role == "superuser" || Auth::user()->role == "admin"){
+                              echo "<th>
+                                    Action
+                                    </th>";
+                            }else{
+                              echo "";
+                            }
+                            ?>
                         </tr>
                     </thead>
                     <tbody>
                       <?php $no=1; ?>
                       @foreach($kendaraan as $p)
-                      <tr>
+                      <tr id="user_id_{{ $p->id_kendaraan }}" disabled>
                         <td>{{ $no++ }}</td>
                         <td>{{ $p->no_plat }}</td>
                         <td>{{ $p->nama_kendaraan }}</td>
                         <td>{{ $p->mrk_kendaraan }}</td>
-                        <td> <button type="button"
-                              class="btn btn-primary"
-                              data-toggle="modal"
-                              data-target="#exampleModal{{ $p->id_kendaraan }}">
-                              Show</button>
-                        </td>
-                        <!-- <td><img src="{{ Storage::url('public/').$p->foto }}" class="rounded" style="width: 150px"></td> -->
-                        <td>{{ $p->thn_buat }}</td>
-                        <td>{{ $p->warna }}</td>
-                        <td>{{ $p->tp_kendaraan }}</td>
-                        <td>{{ $p->status }}</td>
                         <td>
-                          <button type="button" style="margin-bottom: 10px; width: 100%" class="btn btn-warning edit" data-toggle="modal" data-target="#edit-modal{{ $p->id_kendaraan }}">
-                              Edit </button>
-                          <br>
-                          <button type="button" class="btn btn-danger delete" data-toggle="modal" data-target="#destroy-modal{{ $p->id_kendaraan }}">
-                              Delete </button>
+                         
+                          <img id="myImg{{ $p->id_kendaraan }}" class="MyImg" src="{{ asset('uploads/kendaraan/'.$p->foto) }}" alt="{{ $p->nama_kendaraan }}" style="width:100px;max-width:300px">
+
+                        </td>
+                        <td>{{ $p->tipe }}</td>
+                        <td>
+                          <?php
+    
+                              date_default_timezone_set('Asia/Jakarta');
+
+                              $tgl_pjk = $p->tgl_pajak;
+                              
+                              $oke = date('Y-m-d');
+                              
+                              $datetime1 = strtotime($tgl_pjk);
+                              $datetime2 = strtotime($oke);
+                              $secs = $datetime1 - $datetime2;// == return sec in difference
+                              $days = $secs / 86400;
+
+                              $hari = floor($days);
+
+                              if($hari == 0 || $hari < 0){
+                                echo "<p class='text-danger'>expired Segera Perbarui Pajak</p>";
+                              }else if($hari >= 1 && $hari <= 10 ){
+                                echo "<p class='text-warning'>$hari hari lagi expired</p>";
+                              }else{
+                                echo ($hari." hari lagi");
+                              }
+                              
+                          ?> 
+                        </td>
+                        <td>{{ $p->status }}</td>
+                        <td>{{ $p->statusPinjam }}</td>
+                          <?php 
+
+                            if(Auth::user()->role == "superuser" || Auth::user()->role == "admin")
+                            {
+                            echo "<td>";
+                            echo "<button type='button' style='margin-bottom: 10px; width: 100%' class='btn btn-warning edit' data-bs-toggle='modal' data-bs-target='#edit-modal$p->id_kendaraan'>
+                              Edit </button>";
+
+                            echo "<br>";
+                              if($p->statusPinjam == "Request" || $p->statusPinjam == "Digunakan"){
+                                echo "";
+                              }else{
+                                echo "<button type='button' style='margin-bottom: 10px; width: 100%' class='btn btn-danger delete' data-bs-toggle='modal' data-bs-target='#destroy-modal$p->id_kendaraan'>
+                                  Delete </button>";
+                              }
+
+                              echo "</td>";
+                            }else{
+                              echo "";
+                            }
+                          ?>
                         </td>
                       </tr>
                       @endforeach
@@ -72,44 +118,55 @@
             </div>
         </div>
 </div>
-  
+
+
+
+<div id="myModal" class="modal">
+
+  <!-- The Close Button -->
+  <span class="close">&times;</span>
+
+  <!-- Modal Content (The Image) -->
+  <img class="modal-content" id="img01">
+
+  <!-- Modal Caption (Image Text) -->
+  <div id="caption"></div>
+</div>
+
+<!-- javascript onclick -->
 @foreach($kendaraan as $p)
-<div class="modal fade"
-        id="exampleModal{{ $p->id_kendaraan }}"
-        tabindex="-1"
-        role="dialog"
-        aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
-         
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-             
-                <!-- Add image inside the body of modal -->
-                <div class="modal-body">
-                    <img id="image" src="{{ Storage::url('public/').$p->foto }}" class="rounded" style="width: 100%"
-                        alt="Click on button" />
-                </div>
- 
-                <div class="modal-footer">
-                    <button type="button"
-                        class="btn btn-secondary"
-                        data-dismiss="modal">
-                        Close
-                </button>
-                </div>
-            </div>
-        </div>
-    </div>
+<script> 
+    // Get the modal
+    var modal = document.getElementById("myModal");
+
+    // Get the image and insert it inside the modal - use its "alt" text as a caption
+    var img = document.getElementById("myImg{{$p->id_kendaraan}}");
+    var modalImg = document.getElementById("img01");
+    var captionText = document.getElementById("caption");
+    img.onclick = function(){
+      modal.style.display = "block";
+      modalImg.src = this.src;
+      captionText.innerHTML = this.alt;
+    }
+
+    // Get the <span> element that closes the modal
+    var span = document.getElementsByClassName("close")[0];
+
+    // When the user clicks on <span> (x), close the modal
+    span.onclick = function() {
+      modal.style.display = "none";
+    }
+</script>
 @endforeach
 
 @foreach($kendaraan as $p)
 <!-- Modal Edit -->
-<div class="modal fade" id="edit-modal{{ $p->id_kendaraan }}" tabindex="-1" role="dialog" aria-labelledby="edit-modalLabel" aria-hidden="true">
+<div class="modal fade" data-bs-backdrop="static" id="edit-modal{{ $p->id_kendaraan }}" tabindex="-1" role="dialog" aria-labelledby="edit-modalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="edit-modalLabel">Edit Data</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -146,8 +203,8 @@
                   </div>
                 </div>
               </div>
-              <div class="row"> 
-                <div class="col-md-12 mb-1">
+              <div class="row">
+                <div class="col-md-6 mb-1">
                   <label for="validationCustom02">Foto</label>
                   <input type="file" class="form-control" name="foto" placeholder="Foto">
                   @if($errors->has('foto'))
@@ -159,6 +216,36 @@
                     Good job!
                   </div>
                 </div>
+                <div class="col-md-6 mb-1">
+                  <label for="validationCustom05">Tipe Kendaraan</label>
+                    <select name="tipe_kendaraan" id="r" class="form-select" required>
+                      <option disabled="">- Tipe -</option>
+                      <option <?php 
+                      if(($p->tipe) == "Mobil"){
+                        echo "selected='selected'";
+                      }else{
+                        echo "";
+                      } 
+                      ?> value="1">Mobil</option>
+                      <option
+                      <?php 
+                      if(($p->tipe) == "Motor"){
+                        echo "selected='selected'";
+                      }else{
+                        echo "";
+                      } 
+                      ?>
+                       value="2">Motor</option>
+                    </select>
+                </div>
+                  @if($errors->has('tipe_kendaraan'))
+                    <div class="text-danger">
+                      {{ $errors->first('tipe_kendaraan')}}
+                    </div>
+                  @endif
+                  <div class="invalid-feedback">
+                    Please provide a valid Tipe.
+                  </div>
               </div>
             <div class="row">
                 <div class="col-md-6 mb-2">
@@ -188,14 +275,14 @@
               </div>
               <div class="row">
                 <div class="col-md-4 mb-3">
-                  <label for="validationCustom05">Tipe Kendaraan</label>
+                  <label for="validationCustom05">Kendaraan</label>
                   <select name="tipe" id="r" class="form-select" required>
                       <option disabled="">- Tipe -</option>
                       @foreach($tipe as $q)
                       <option <?php 
                         $tipe_kendaraan =  ($p->tp_kendaraan);
                         if($tipe_kendaraan ==  ($q->tp_kendaraan)){
-                          echo "selected='selected'";;
+                          echo "selected='selected'";
                         }
                       ?>
                       >{{ $q->tp_kendaraan }}</option>
@@ -254,9 +341,20 @@
                       ?> >Perpanjang STNk & Ganti Plat</option>
                     </select>
                 </div>
+                <div class="row">
+                <div class="form-group col-md-12">
+                  <label>Tanggal Perpanjang STNK :</label>
+                  <input type="datetime-local" id="tgl_stnk" name="tgl_stnk" class="form-control" value="{{ $p->tgl_pajak }}">
+                  @if($errors->has('tgl_stnk'))
+                        <div class="text-danger">
+                          {{ $errors->first('tgl_stnk')}}
+                        </div>
+                  @endif
+                </div>                
+              </div>
               </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
               <button type="submit" class="btn btn-primary btn-update">Update</button>
             </div>
           </form>
@@ -269,7 +367,7 @@
 
 <!-- Destroy Modal -->
 @foreach($kendaraan as $p)
-<div class="modal fade" id="destroy-modal{{ $p->id_kendaraan }}" tabindex="-1" role="dialog" aria-labelledby="destroy-modalLabel" aria-hidden="true">
+<div class="modal fade" data-bs-backdrop="static" id="destroy-modal{{ $p->id_kendaraan }}" tabindex="-1" role="dialog" aria-labelledby="destroy-modalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -277,12 +375,12 @@
         <form method="post" action="{{ route('delete_kendaraan') }}">
           {{ csrf_field() }}
           <input type="hidden" id="n" name="id_gue" class="form-control" value="{{ $p->id_kendaraan }}" required>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
         <button type="submit" class="btn btn-danger btn-destroy">Hapus</button>
       </div>
     </form>

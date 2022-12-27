@@ -1,0 +1,6 @@
+SELECT `id_user`, `no_plat`, `tanggal_request`
+  FROM histori_kendaraan WHERE `tanggal_pengembalian` IN (
+    SELECT MAX(`tanggal_pengembalian`)
+      FROM histori_kendaraan GROUP BY `no_plat`
+  )
+  ORDER BY `id_user`ASC, `tanggal_pengembalian` DESC
