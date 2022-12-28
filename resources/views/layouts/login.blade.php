@@ -19,6 +19,14 @@
   <link rel="icon" href="{{ asset('img/favicon.png') }}?v={{ date('YmdHis') }}">
 
   <title>@yield('judul')</title>
+
+  <style>
+            body {
+                background-image: url({{url('img/background-1.jpg')}});
+                background-attachment: fixed;
+                background-size: cover;
+            }
+        </style>
   </head>
 
   <body class="hold-transition login-page">
