@@ -100,7 +100,15 @@ class HomeController extends Controller
                 'alamat' => $request->alamat,
                 'jns_klmn' => $request->jns_klmn
             ]);
-        }else if($email != $request->email){
+        }else if($email != $request->email && empty($foto)){
+            $data = ([
+                'name' => $request->nama,
+                'email' => $request->email,
+                'no_tlpn' => $request->no_tlpn,
+                'alamat' => $request->alamat,
+                'jns_klmn' => $request->jns_klmn
+            ]);
+        }else if($email != $request->email && !empty($foto)){
 
             $getData = $this->post->getFotoUser($id);
 
@@ -152,6 +160,7 @@ class HomeController extends Controller
         }
 
         $this->post->profileUpdate($id, $data);
+        // dump($data);
 
         return redirect()->route('profile')->with(['success' => 'Data Berhasil DiUpdate!']);
     }

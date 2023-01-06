@@ -49,7 +49,7 @@
                       <?php $no=1; ?>
                       @foreach($histori as $histori)
                       <td>{{ $no++ }}</td>
-                      <?php print(!(Auth::user()->role == "superuser" || Auth::user()->role == "admin") ? "<td> $histori->name </td>" : "")?>
+                      <?php print(!(Auth::user()->role == "superuser" || Auth::user()->role == "admin") ? "<td> <a data-bs-toggle='modal' data-bs-target='#detail-modal$histori->id' >$histori->name </a> </td>" : "")?>
                       <td>{{ $histori->no_plat }}</td>
                       <?php
 
